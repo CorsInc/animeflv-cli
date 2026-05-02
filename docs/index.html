@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>animeflv-cli · Streaming de anime desde tu terminal</title>
+  <meta name="description" content="CLI ligera para buscar anime y obtener links de streaming desde AnimeFLV.net. Scraping con Axios + Cheerio, sin navegador.">
+  <style>
+    :root {
+      --bg: #0f0f1a;
+      --card: #1a1a2e;
+      --accent: #e94560;
+      --accent2: #0f3460;
+      --text: #eaeaea;
+      --muted: #8888aa;
+      --border: #2a2a4a;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+    .hero {
+      padding: 80px 0 60px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 50%, rgba(233,69,96,.08) 0%, transparent 60%),
+                  radial-gradient(circle at 70% 50%, rgba(15,52,96,.12) 0%, transparent 60%);
+      z-index: 0;
+    }
+    .hero > * { position: relative; z-index: 1; }
+    .hero h1 { font-size: 3.2rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 8px; }
+    .hero h1 span { color: var(--accent); }
+    .hero .subtitle { font-size: 1.2rem; color: var(--muted); margin-bottom: 32px; }
+    .hero .badge { display: inline-block; background: var(--accent2); color: var(--text); padding: 6px 16px; border-radius: 20px; font-size: .85rem; font-weight: 600; margin-bottom: 20px; }
+    .hero .install { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 24px; display: inline-block; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: .95rem; color: var(--muted); text-align: left; max-width: 100%; overflow-x: auto; }
+    .hero .install code { color: #7ec8e3; }
+    section { padding: 60px 0; }
+    section h2 { font-size: 1.8rem; font-weight: 700; margin-bottom: 32px; text-align: center; }
+    section h2::after { content: ''; display: block; width: 48px; height: 3px; background: var(--accent); margin: 10px auto 0; border-radius: 2px; }
+    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+    .feature { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; transition: transform .2s, border-color .2s; }
+    .feature:hover { transform: translateY(-3px); border-color: var(--accent); }
+    .feature .icon { font-size: 1.8rem; margin-bottom: 10px; }
+    .feature h3 { font-size: 1.1rem; margin-bottom: 8px; }
+    .feature p { color: var(--muted); font-size: .92rem; }
+    .commands-table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+    .commands-table th { background: var(--accent2); padding: 14px 18px; text-align: left; font-size: .85rem; text-transform: uppercase; letter-spacing: .5px; }
+    .commands-table td { padding: 14px 18px; border-top: 1px solid var(--border); font-size: .92rem; }
+    .commands-table td:first-child { font-family: 'JetBrains Mono', 'Fira Code', monospace; color: #7ec8e3; white-space: nowrap; }
+    .commands-table tr:hover td { background: rgba(233,69,96,.04); }
+    .example-box { background: #0a0a18; border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: .88rem; line-height: 1.7; overflow-x: auto; }
+    .example-box .prompt { color: var(--muted); }
+    .example-box .output { color: #a0d8a0; }
+    .example-box .highlight { color: #f0c060; }
+    .servers { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 16px; }
+    .server-tag { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 6px 16px; font-size: .85rem; color: var(--muted); }
+    footer { text-align: center; padding: 40px 0; border-top: 1px solid var(--border); color: var(--muted); font-size: .85rem; }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 2rem; }
+      .hero .install { font-size: .8rem; padding: 12px 16px; }
+      .commands-table td:first-child { white-space: normal; }
+    }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <div class="container">
+      <span class="badge">⚡ v1.0.0 · MIT</span>
+      <h1>animeflv-<span>cli</span></h1>
+      <p class="subtitle">Busca anime y obtén links de streaming desde tu terminal.<br>Sin navegador, sin Puppeteer, solo Node.js.</p>
+      <div class="install">
+        <code>$</code> git clone https://github.com/CorsInc/animeflv-cli.git<br>
+        <code>$</code> cd animeflv-cli && npm install<br>
+        <code>$</code> node index.js search "dragon ball"
+      </div>
+    </div>
+  </div>
+  <section>
+    <div class="container">
+      <h2>¿Qué hace?</h2>
+      <div class="features">
+        <div class="feature"><div class="icon">🔍</div><h3>Buscar anime</h3><p>Encuentra cualquier anime por nombre con búsqueda directa en AnimeFLV.</p></div>
+        <div class="feature"><div class="icon">📋</div><h3>Info + episodios</h3><p>Muestra sinopsis, géneros, estado y lista completa de episodios.</p></div>
+        <div class="feature"><div class="icon">🔗</div><h3>Links de streaming</h3><p>Obtén enlaces directos a múltiples servidores por episodio.</p></div>
+        <div class="feature"><div class="icon">📦</div><h3>Sin dependencias pesadas</h3><p>Solo Axios + Cheerio. Nada de navegadores, Puppeteer ni Selenium.</p></div>
+        <div class="feature"><div class="icon">⚡</div><h3>Rápido</h3><p>Scraping ligero desde el HTML. Respuestas en segundos.</p></div>
+        <div class="feature"><div class="icon">🖥️</div><h3>CLI nativa</h3><p>Funciona en cualquier sistema con Node.js instalado.</p></div>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="container">
+      <h2>Comandos</h2>
+      <table class="commands-table">
+        <thead><tr><th>Comando</th><th>Descripción</th></tr></thead>
+        <tbody>
+          <tr><td>search &lt;query&gt;</td><td>Busca anime por nombre</td></tr>
+          <tr><td>info &lt;slug&gt;</td><td>Muestra info del anime + lista de episodios</td></tr>
+          <tr><td>links &lt;slug&gt; &lt;ep&gt;</td><td>Obtiene links de streaming de un episodio</td></tr>
+          <tr><td>all &lt;slug&gt;</td><td>Info + links de todos los episodios</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <section>
+    <div class="container">
+      <h2>Ejemplo</h2>
+      <div class="example-box">
+        <span class="prompt">$</span> node index.js info shingeki-no-kyojin<br><br>
+        <span class="highlight">📺 Shingeki no Kyojin</span><br>
+        <span class="output">   Tipo: TV | Estado: Finalizado</span><br>
+        <span class="output">   Géneros: Acción, Drama, Fantasía, Militar</span><br>
+        <span class="output">   Episodios: 25</span><br>
+        <span class="output">     Ep. 1 — /ver/shingeki-no-kyojin-1</span><br>
+        <span class="output">     Ep. 2 — /ver/shingeki-no-kyojin-2</span><br>
+        <span class="output">     ...</span><br><br>
+        <span class="prompt">$</span> node index.js links shingeki-no-kyojin 1<br><br>
+        <span class="highlight">🔗 Links para shingeki-no-kyojin — Episodio 1:</span><br>
+        <span class="output">  [SUB] SW: https://streamwish.to/e/...</span><br>
+        <span class="output">  [SUB] MEGA: https://mega.nz/#!...</span><br>
+        <span class="output">  [SUB] NETU: https://hqq.tv/...</span>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="container">
+      <h2>Servidores soportados</h2>
+      <div class="servers">
+        <span class="server-tag">StreamWish</span>
+        <span class="server-tag">MEGA</span>
+        <span class="server-tag">YourUpload</span>
+        <span class="server-tag">Mail.ru</span>
+        <span class="server-tag">OK.ru</span>
+        <span class="server-tag">Netu (HQQ)</span>
+        <span class="server-tag">StreamTape</span>
+      </div>
+    </div>
+  </section>
+  <footer>
+    <div class="container">
+      <p><a href="https://github.com/CorsInc/animeflv-cli">animeflv-cli</a> · MIT License · Solo para fines educativos</p>
+      <p style="margin-top:6px;">Hecho con ❤️ por <a href="https://github.com/CorsInc">CorsInc</a></p>
+    </div>
+  </footer>
+</body>
+</html>
