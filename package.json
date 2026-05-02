@@ -1,0 +1,18 @@
+{
+  "name": "animeflv-cli",
+  "version": "1.0.0",
+  "description": "CLI para buscar anime y obtener links de streaming desde AnimeFLV.net",
+  "main": "index.js",
+  "bin": {
+    "animeflv": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": ["animeflv", "anime", "scraper", "cli", "streaming"],
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.0",
+    "cheerio": "^1.0.0"
+  }
+}
